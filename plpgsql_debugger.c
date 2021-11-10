@@ -1267,8 +1267,6 @@ is_datum_visible(PLpgSQL_datum *datum)
 
 		if( strncmp( var->refname, "txt", 3 ) == 0 )
 		{
-			int	   i;
-
 			/*
 			 * Starts with 'txt' - see if the rest of the string is composed
 			 * entirely of digits
