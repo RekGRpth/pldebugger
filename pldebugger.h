@@ -87,7 +87,7 @@ extern void clearBreakpoint( char * command );
 extern bool breakpointsForFunction( Oid funcOid );
 
 extern void	dbg_send( const char *fmt, ... )
-#ifdef PG_PRINTF_ATTRIBUTE
+#ifdef PG_C_PRINTF_ATTRIBUTE
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)))
