@@ -1406,19 +1406,27 @@ initGlobalBreakpoints(void)
 	if (gbpd == NULL)
 		elog(ERROR, "out of shared memory");
 
-#if (PG_VERSION_NUM >= 90600)
+#if (PG_VERSION_NUM >= 190000)
+	/*
+	 * As of PostgreSQL 19, LWLockNewTrancheId() takes the tranche name
+	 * directly and registers it, so a separate call to
+	 * LWLockRegisterTranche() is no longer needed (and that function
+	 * no longer exists).
+	 */
 	if (!found)
 	{
-#if (PG_VERSION_NUM >= 190000)
 		gbpd->tranche_id = LWLockNewTrancheId("pldebugger");
-#else
+		LWLockInitialize(&gbpd->lock, gbpd->tranche_id);
+	}
+	breakpointLock = &gbpd->lock;
+#elif (PG_VERSION_NUM >= 90600)
+	if (!found)
+	{
 		gbpd->tranche_id = LWLockNewTrancheId();
-#endif
 		LWLockInitialize(&gbpd->lock, gbpd->tranche_id);
 	}
 	{
-#if (PG_VERSION_NUM >= 190000)
-#elif (PG_VERSION_NUM >= 100000)
+#if (PG_VERSION_NUM >= 100000)
 		LWLockRegisterTranche(gbpd->tranche_id, "pldebugger");
 #else
 		static LWLockTranche tranche;
@@ -1444,7 +1452,11 @@ initGlobalBreakpoints(void)
 	breakpointCtl.entrysize = sizeof(Breakpoint);
 	breakpointCtl.hash 	  	= tag_hash;
 
-#if PG_VERSION_NUM >= 190000
+#if (PG_VERSION_NUM >= 190000)
+	/*
+	 * As of PostgreSQL 19, ShmemInitHash() takes a single nelems argument
+	 * instead of separate init_size/max_size arguments.
+	 */
 	globalBreakpoints = ShmemInitHash("Global Breakpoints Table", tableEntries, &breakpointCtl, HASH_ELEM | HASH_FUNCTION);
 #else
 	globalBreakpoints = ShmemInitHash("Global Breakpoints Table", tableEntries, tableEntries, &breakpointCtl, HASH_ELEM | HASH_FUNCTION);
@@ -1460,7 +1472,7 @@ initGlobalBreakpoints(void)
 	breakcountCtl.entrysize = sizeof(BreakCount);
 	breakcountCtl.hash    	= tag_hash;
 
-#if PG_VERSION_NUM >= 190000
+#if (PG_VERSION_NUM >= 190000)
 	globalBreakCounts = ShmemInitHash("Global BreakCounts Table", tableEntries, &breakcountCtl, HASH_ELEM | HASH_FUNCTION);
 #else
 	globalBreakCounts = ShmemInitHash("Global BreakCounts Table", tableEntries, tableEntries, &breakcountCtl, HASH_ELEM | HASH_FUNCTION);

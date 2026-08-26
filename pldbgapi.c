@@ -1192,6 +1192,7 @@ static void * readn( int serverHandle, void * dst, size_t len )
 			{
 				/* Timer expired */
 				return( NULL );
+				break;
 			}
 
 			default:
